@@ -1,0 +1,96 @@
+// Campus Pulse Prisma Database Schema
+// Optimized for SQLite in local development and seamlessly portable to PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  avatar        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  notices       Notice[]
+  notifications Notification[]
+  settings      UserSettings?
+
+  @@index([email])
+}
+
+model Notice {
+  id                    String         @id @default(cuid())
+  title                 String
+  description           String
+  originalText          String
+  category              String         // Examination, Assignment, Workshop, Seminar, Cultural Event, Sports, Placement, Holiday, College Announcement, Other
+  priority              String         // URGENT, HIGH, MEDIUM, LOW
+  
+  eventDate             DateTime?      // Event occurrence date
+  startTime             String?        // e.g. "10:00 AM" or "14:30"
+  endTime               String?        // e.g. "01:00 PM"
+  venue                 String?        // Seminar Hall 2, Audi, Lab 4, etc.
+  
+  registrationDeadline  DateTime?      // Cutoff to register
+  submissionDeadline    DateTime?      // Deadline for assignments/submissions
+  
+  status                String         @default("Upcoming") // Upcoming, Due Today, Overdue, Completed, Expired
+  isCompleted           Boolean        @default(false)
+  
+  sourceType            String         @default("WhatsApp") // WhatsApp, Email, Circular, Notice Board, Other
+  missingInfo           String?        // e.g., "Registration link missing", "End time not specified"
+  instructions          String?        // Additional rules/prerequisites
+  
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  
+  userId                String
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  notifications         Notification[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([priority])
+  @@index([eventDate])
+  @@index([status])
+  @@index([isCompleted])
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  title       String
+  message     String
+  type        String    // URGENT, DEADLINE, EVENT, SYSTEM
+  readStatus  Boolean   @default(false)
+  scheduledAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  noticeId    String?
+  notice      Notice?   @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([readStatus])
+  @@index([scheduledAt])
+}
+
+model UserSettings {
+  id                  String   @id @default(cuid())
+  theme               String   @default("system") // light, dark, system
+  timezone            String   @default("Asia/Kolkata")
+  reminderPreferences String   @default("{\"urgentAlerts\":true,\"deadlineAlerts\":true,\"dailyDigest\":true}")
+  
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+

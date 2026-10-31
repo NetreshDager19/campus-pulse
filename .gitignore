@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# next.js build
+.next/
+out/
+
+# secrets (never push these)
+.env
+.env.local
+.env*.local
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# prisma local database (if using SQLite)
+prisma/*.db
+prisma/*.db-journal
